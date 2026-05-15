@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rin's Little Space 🌼</title>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    <link href="icon.png" rel="icon">
     <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
@@ -807,8 +807,20 @@ function prevPage(){if(cur>0){cur--;updateAlbumNav();document.getElementById('al
 <input type="file" id="photoFileInput" accept="image/*" style="display:none">
 
 <script>
-// ===================== PHOTO UPLOAD =====================
+// ===================== PHOTO UPLOAD + SAVE =====================
 let _pendingPhotoWrap = null;
+
+// Load saved photos on startup
+function loadSavedPhotos() {
+    document.querySelectorAll('.photo-wrap').forEach((wrap, i) => {
+        const saved = localStorage.getItem('rin_photo_' + i);
+        if (saved) {
+            const img = wrap.querySelector('img.photo');
+            if (img) img.src = saved;
+        }
+        wrap.dataset.photoIndex = i;
+    });
+}
 
 function pickPhoto(wrapEl) {
     _pendingPhotoWrap = wrapEl;
@@ -821,12 +833,26 @@ document.getElementById('photoFileInput').addEventListener('change', function() 
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = _pendingPhotoWrap.querySelector('img.photo');
-        if (img) img.src = e.target.result;
+        if (img) {
+            img.src = e.target.result;
+            // Save to localStorage with the wrap's index
+            const idx = _pendingPhotoWrap.dataset.photoIndex;
+            try {
+                localStorage.setItem('rin_photo_' + idx, e.target.result);
+                document.getElementById('quoteBox').textContent = 'Foto tersimpan! 📷✨';
+            } catch(err) {
+                // localStorage full (images are large) — show warning
+                document.getElementById('quoteBox').textContent = 'Foto terpasang tapi storage penuh 😢 coba hapus foto lain dulu';
+            }
+        }
         _pendingPhotoWrap = null;
     };
     reader.readAsDataURL(file);
-    this.value = ''; // reset so same file can be picked again
+    this.value = '';
 });
+
+// Run on load
+loadSavedPhotos();
 </script>
 
 </body>
